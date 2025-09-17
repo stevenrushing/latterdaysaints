@@ -1,0 +1,207 @@
+# this is a comment. Anything after a hashtag is ignored by automod
+
+# Temporary automod in case things get crazy. Remove the next 5 hashtags to send *everything* to the mod queue.
+#---
+#type: any
+##set_locked: true
+#action: filter
+#---
+
+author: [
+"godmadethestars", # writes the most inane stuff - 20250917 - sr
+"stevenrushing", # my old account - 20250917 - sr
+]
+
+action: filter # filter sends to the queue, remove deletes outright
+action_reason: "Preapproval"
+
+---
+#note the three dashes above - every rule must be separated from every other rule by three dashes
+
+
+    ###############################
+    #   Preapproval - post only   #
+    ###############################
+        
+# the above rule doesn't specify a type, so it applies to both comments and submissions
+# the below rule only applies to submissions, not comments        
+type: submission
+author: [
+"godmadethestars", "stevenrushing",
+]
+action: filter
+action_reason: "Preapproval - post only"
+
+---
+
+
+    #############################
+    #   Report - comment only   #
+    #############################
+        
+# This rule allows the comment to go through, but reports it for moderator review - for mostly good users
+
+type: comment
+author: [
+"godmadethestars", "stevenrushing",
+]
+action: report
+action_reason: "Report only folk"
+
+---
+
+
+    ###########################
+    #   Preapproval threads   #
+    ###########################
+    
+# When I put this together the top post on r/episcopalian was:
+# https://www.reddit.com/r/Episcopalian/comments/1nittw8/my_first_copy_of_the_bcp_im_so_excited/
+# the code you would add in this list would be that code in the middle of the url, 1nittw8
+# I would suggest keeping this rule, but commenting it out until you need it
+
+# Add thread IDs to this list
+
+parent_submission:
+    id: [1nittw8, 15eudmm,]
+action: filter
+action_reason: "thread in pre-approval mode"
+
+---
+
+# r/episcopalian doesn't currently use post flairs, but if you did you could filter based on them here.
+# a post flair is a way to categorize posts. You could have one for BoCP, Culture War, Icon Corners, hymns, politics, etc
+# in this example rule any submission flaired "Culture War" goes to the queue for review before being approved
+
+    ##########################################
+    #   Flair - Faith-Challenging Question   #    
+    ##########################################
+
+    type: submission
+    flair_text(includes): "Culture War"
+    action: filter
+    action_reason: "Culture War"
+
+
+---
+# this is our suicide block. I highly suggest this rule, excepting you will want to remove the final line that links to the LDS church resource on suicide
+# note that this rule creates a stickied comment on the post with the given text
+
+    ###################################
+    #   Suicide block (preapproval)   #
+    ###################################
+
+type: submission
+body+title (includes): ["suicide", "kill myself", "want to die", "suicidal"]
+comment: |
+    If you or someone you know is contemplating suicide, please do not hesitate to talk to someone.
+
+    US: Call 988, 1-800-273-8255 or text HOME to 741-741. You can also [chat](https://suicidepreventionlifeline.org/chat) with counselors online. 
+ 
+    Non-US: https://en.wikipedia.org/wiki/List_of_suicide_crisis_lines 
+
+    The Church's Suicide Prevention and Ministering [page](https://www.churchofjesuschrist.org/get-help/suicide) has resources available to those experiencing suicide ideation or thoughts of self-harm. 
+comment_stickied: true
+action: filter
+action_reason: "suicide post"
+
+---
+# this sends to queue posts and comments from brand new accounts. You will note that "is_contributor" flag
+# that allows us to add a person as a contributor which will bypass this rule altogether
+# we typically do this for AMA people we have asked to do AMAs, but might not have an account until the day of the AMA
+
+    #######################
+    #   New User Filter   #
+    #######################
+    
+    # Users younger than 3 days old get manually approved.
+
+type: any
+author:
+    account_age: < 3 days
+    is_contributor: false
+action: filter
+action_reason: "New User"
+
+
+---
+
+# these next three rules remove phone numbers, email addresses, and credit card numbers and sends them for moderator review in the queue
+
+    ###########################
+    #   Anti-Doxxing filter   #
+    ###########################
+
+    title+body (regex): ["\\(?(\\d{3})\\)?([ .-])(\\d{3})([ .-])(\\d{4})","(\\d{5})([ .-])(\\d{6})","\\(?(\\d{4})\\)?([ .-])(\\d{3})([ .-])(\\d{3})","\\(?(\\d{2})\\)?([ .-])(\\d{4})([ .-])(\\d{4})","\\(?(\\d{2})\\)?([ .-])(\\d{3})([ .-])(\\d{4})","\\+([\\d ]{10,15})"]
+    ~body+url (regex): "(\\[[^\\]]+?\\]\\()?(https?://|www\\.)\\S+\\)?"
+    ~body+title+url (regex): ["(800|855|866|877|888|007|911)\\W*\\d{3}\\W*\\d{4}", "\\d{3}\\W*555\\W*\\d{4}", "999-999-9999", "000-000-0000", "123-456-7890", "111-111-1111", "012-345-6789", "888-888-8888", "281\\W*330\\W*8004", "777-777-7777", "678-999-8212", "999([ .-])119([ .-])7253","0118 999 811","0118 999 881", "867( -)?5309", "505\\W*503\\W*4455", "1024 2048"]
+    action: remove
+    modmail_subject: Doxxing Alert!
+    modmail: |
+ 
+        {{permalink}}
+ 
+        The above {{kind}} by /u/{{author}} was removed because it contained a possible phone number. Please investigate immediately.
+ 
+        If the user is doxxing, [ban them](/r/{{subreddit}}/about/banned) and [report them to the reddit admins](http://www.reddit.com/message/compose?to=%2Fr%2Freddit.com&subject=Doxxing%20Report:%20%2Fu%2F{{author}}&message=%2Fu%2F{{author}}%20posted%20a%20phone%20number:%20{{permalink}}) immediately.
+ 
+---
+ 
+    title+body (regex): "[!#$%&'*+./0-9=?_`a-z{|}~^-]+@[.a-z-]+\\.(?:com|org|net)"
+    ~title+body#whitelist: [OKemail1@domain.com, OKemail2@domain.com]
+    action: remove
+    modmail_subject: Doxxing Alert!
+    modmail: |
+ 
+        {{permalink}}
+ 
+        The above {{kind}} by /u/{{author}} was removed because it contained a possible email address. Please investigate immediately.
+ 
+        If the user is doxxing, [ban them](/r/{{subreddit}}/about/banned) and [report them to the reddit admins](http://www.reddit.com/message/compose?to=%2Fr%2Freddit.com&subject=Doxxing%20Report:%20%2Fu%2F{{author}}&message=%2Fu%2F{{author}}%20posted%20an%20email%20address:%20{{permalink}}) immediately.
+ 
+---
+ 
+    title+body (regex): "\\b(?:4[0-9]{12}(?:[0-9]{3})?|5[12345][0-9]{14}|3[47][0-9]{13}|3(?:0[012345]|[68][0-9])[0-9]{11}|6(?:011|5[0-9]{2})[0-9]{12}|(?:2131|1800|35[0-9]{3})[0-9]{11})\\b"
+    action: remove
+    modmail_subject: Doxxing Alert!
+    modmail: |
+ 
+        {{permalink}}
+ 
+        The above {{kind}} by /u/{{author}} was removed because it contained a possible credit card number. Please investigate immediately.
+ 
+        If the user is doxxing, [ban them](/r/{{subreddit}}/about/banned) and [report them to the reddit admins](http://www.reddit.com/message/compose?to=%2Fr%2Freddit.com&subject=Doxxing%20Report:%20%2Fu%2F{{author}}&message=%2Fu%2F{{author}}%20posted%20a%20credit%20card%20number:%20{{permalink}}) immediately.
+    
+---
+
+# removes anything with a certain number of reports and sends a modmail to the moderators to investigate. You can change the number to whatever you want.
+
+    ##################################################
+    #   Remove and modmail anything with 3 reports   #
+    ##################################################
+    
+reports: 3
+action: remove
+modmail: The above {{kind}} by /u/{{author}} was removed because it received 3 reports. Please investigate and ensure that this action was correct. 
+
+---
+
+---
+
+# another instance of the "is_contributor" flag. "u/hitchcockfan" would get caught in this rule, add them as a contributor would bypass the rule for them.
+
+    ##########################
+    #   Removed usernames    #
+    ##########################
+    
+author:
+     name (includes): [
+"shit", "fuck", "cock", "asshole", "cunt", "cuck", "nigger", "nigga", "faggot", "retard", "bitch", "bastard", "whore", "rapist", "boner", "pedo", #swears 
+"jewy", "fascist",
+"twat",
+]
+     is_contributor: false
+action: filter
+action_reason: "Wildcard-removed names"
+
+---
