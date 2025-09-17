@@ -205,3 +205,15 @@ action: filter
 action_reason: "Wildcard-removed names"
 
 ---
+
+
+
+
+
+    #####################
+    #   Foul language   #
+    #####################
+    
+body+title (includes): [shit, bullshit, fuck, fucked, fucking, asshole, cunt, cuck, cock, nigger, nigga, faggot, kill yourself, retard, heretic, whore, rapist, pedo, boner, idiot, twat]
+action: filter
+action_reason: "Banned wordlist"
